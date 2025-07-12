@@ -73,7 +73,7 @@ app.post("/crear-preferencia", async (req, res) => {
   }));
 
   try {
-    const preference = await mp.preferences.create({
+    const preference = await mercadopago.preferences.create({
       items,
       back_urls: {
         success: "https://www.success.com",
