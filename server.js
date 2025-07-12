@@ -7,8 +7,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 🔐 Configuración de MercadoPago
-mercadopago.configure({
+// 🔐 Nueva forma de configurar MercadoPago (v1.5+)
+const mp = new mercadopago.MercadoPago({
   access_token: "APP_USR-3258188625824242-071103-aba7caf4da3a3236d31dd66e564a9bef-2553371836",
 });
 
@@ -33,10 +33,10 @@ db.connect((err) => {
 app.post("/reservar-cita", (req, res) => {
   const { nombre, celular, email, fecha, hora } = req.body;
 
-  console.log("📥 Datos recibidos para cita:", req.body); // <-- AGREGA ESTA LÍNEA
+  console.log("📥 Datos recibidos para cita:", req.body);
 
   if (!nombre || !celular || !email || !fecha || !hora) {
-    console.warn("⚠️ Faltan datos:", { nombre, celular, email, fecha, hora }); // otra línea útil
+    console.warn("⚠️ Faltan datos:", { nombre, celular, email, fecha, hora });
     return res.status(400).json({ error: "⚠️ Faltan datos obligatorios" });
   }
 
@@ -56,7 +56,6 @@ app.post("/reservar-cita", (req, res) => {
   });
 });
 
-
 // 💳 Ruta para crear preferencia de pago con MercadoPago
 app.post("/crear-preferencia", async (req, res) => {
   const { carrito } = req.body;
@@ -73,7 +72,7 @@ app.post("/crear-preferencia", async (req, res) => {
   }));
 
   try {
-    const preference = await mercadopago.preferences.create({
+    const preference = await mp.preferences.create({
       items,
       back_urls: {
         success: "https://www.success.com",
@@ -93,7 +92,7 @@ app.post("/crear-preferencia", async (req, res) => {
 });
 
 // 🚀 Iniciar servidor
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor backend en ejecución: http://localhost:${PORT}`);
 });
