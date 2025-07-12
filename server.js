@@ -14,36 +14,39 @@ mercadopago.configure({
 
 // ✅ Supabase
 const SUPABASE_URL = "https://hkjjuzhchtvsqqdwmgqf.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // tu clave service_role completa
-
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // (mantén tu service_role_key aquí)
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ✅ Ruta para probar backend
-app.get("/test", (req, res) => {
-  res.json({ message: "✅ Backend Supabase funcionando" });
+// ✅ Ruta para testear que el backend responde
+app.get("/test", (_, res) => {
+  res.json({ message: "✅ Backend Supabase funcionando correctamente" });
 });
 
-// 📅 Ruta para registrar cita en Supabase (sin usuario_id)
+// 📅 Ruta para registrar cita en Supabase
 app.post("/reservar-cita", async (req, res) => {
   const { nombre, celular, email, fecha_cita, hora_cita } = req.body;
+
+  console.log("📥 Datos recibidos:", req.body);
 
   if (!nombre || !celular || !email || !fecha_cita || !hora_cita) {
     return res.status(400).json({ error: "⚠️ Faltan datos obligatorios" });
   }
 
+  const fecha_registro = new Date().toISOString(); // Generamos fecha actual
+
   const { data, error } = await supabase
     .from("reservas")
-    .insert([{ nombre, celular, email, fecha_cita, hora_cita }]);
+    .insert([{ nombre, celular, email, fecha_cita, hora_cita, fecha_registro }]);
 
   if (error) {
-    console.error("❌ Supabase error:", error.message);
-    return res.status(500).json({ error: "No se pudo guardar la cita" });
+    console.error("❌ Error al guardar cita:", error.message, error.details);
+    return res.status(500).json({ error: "No se pudo guardar la cita", detalle: error.message });
   }
 
   res.json({ message: "✅ Cita registrada con éxito", data });
 });
 
-// 💳 Crear preferencia de pago
+// 💳 MercadoPago - Crear preferencia de pago
 app.post("/crear-preferencia", async (req, res) => {
   const { carrito } = req.body;
 
