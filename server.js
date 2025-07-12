@@ -14,7 +14,7 @@ mercadopago.configure({
 
 // ✅ Supabase
 const SUPABASE_URL = "https://hkjjuzhchtvsqqdwmgqf.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // (mantén tu service_role_key aquí)
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhramp1emhjaHR2c3FxZHdtZ3FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjMwMzExNiwiZXhwIjoyMDY3ODc5MTE2fQ.tP5jSXgvHzaf8xMaWVJWnQGc9I0zRR3Ul1VhNgz73lI"; // (mantén tu service_role_key aquí)
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ Ruta para testear que el backend responde
