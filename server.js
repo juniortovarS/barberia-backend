@@ -1,63 +1,59 @@
 const express = require("express");
 const cors = require("cors");
 const mercadopago = require("mercadopago");
-const mysql = require("mysql2");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ✅ Configuración clásica de MercadoPago
+// ✅ Configuración de MercadoPago
 mercadopago.configure({
   access_token: "APP_USR-3258188625824242-071103-aba7caf4da3a3236d31dd66e564a9bef-2553371836",
 });
 
+// ✅ Configuración de Supabase
+const SUPABASE_URL = "https://hkjjuzhchtvsqqdwmgqf.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhramp1emhjaHR2c3FxZHdtZ3FmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjMwMzExNiwiZXhwIjoyMDY3ODc5MTE2fQ.tP5jSXgvHzaf8xMaWVJWnQGc9I0zRR3Ul1VhNgz73";
 
-// 💾 Conexión a la base de datos MySQL
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "barberia",
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 🧪 Ruta de prueba
+app.get("/test", (req, res) => {
+  res.json({ message: "✅ Backend Supabase está funcionando correctamente" });
 });
 
-// ▶ Intentar conexión
-db.connect((err) => {
-  if (err) {
-    console.error("❌ Error de conexión a MySQL:", err.message);
-  } else {
-    console.log("✅ Conectado correctamente a la base de datos MySQL");
-  }
-});
+// 📅 Registrar cita
+app.post("/reservar-cita", async (req, res) => {
+  const { nombre, celular, email, fecha_cita, hora_cita, usuario_id } = req.body;
 
-// 📅 Ruta para registrar cita en MySQL
-app.post("/reservar-cita", (req, res) => {
-  const { nombre, celular, email, fecha, hora } = req.body;
+  console.log("📥 Datos recibidos:", req.body);
 
-  console.log("📥 Datos recibidos para cita:", req.body);
-
-  if (!nombre || !celular || !email || !fecha || !hora) {
-    console.warn("⚠️ Faltan datos:", { nombre, celular, email, fecha, hora });
+  // Verifica cada campo
+  if (!nombre || !celular || !email || !fecha_cita || !hora_cita || !usuario_id) {
+    console.warn("❌ Faltan uno o más campos:", { nombre, celular, email, fecha_cita, hora_cita, usuario_id });
     return res.status(400).json({ error: "⚠️ Faltan datos obligatorios" });
   }
 
-  const sql = `
-    INSERT INTO reservas (nombre, celular, email, fecha_cita, hora_cita, fecha_registro)
-    VALUES (?, ?, ?, ?, ?, NOW())
-  `;
+  try {
+    const { data, error } = await supabase
+      .from("reservas")
+      .insert([{ nombre, celular, email, fecha_cita, hora_cita, usuario_id }]);
 
-  db.query(sql, [nombre, celular, email, fecha, hora], (err, result) => {
-    if (err) {
-      console.error("❌ Error al guardar la cita en MySQL:", err.message);
+    if (error) {
+      console.error("❌ Error al guardar cita:", error.message);
       return res.status(500).json({ error: "No se pudo guardar la cita" });
     }
 
-    console.log("✅ Cita registrada con ID:", result.insertId);
-    res.json({ message: "Cita registrada con éxito" });
-  });
+    console.log("✅ Cita registrada:", data);
+    res.json({ message: "✅ Cita registrada con éxito", data });
+  } catch (err) {
+    console.error("❌ Error general al registrar cita:", err.message);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
 });
 
-// 💳 Ruta para crear preferencia de pago con MercadoPago
+// 💳 Crear preferencia MercadoPago
 app.post("/crear-preferencia", async (req, res) => {
   const { carrito } = req.body;
 
@@ -65,7 +61,7 @@ app.post("/crear-preferencia", async (req, res) => {
     return res.status(400).json({ error: "Carrito inválido" });
   }
 
-  const items = carrito.map((item) => ({
+  const items = carrito.map(item => ({
     title: item.nombre,
     quantity: item.cantidad,
     currency_id: "PEN",
@@ -84,16 +80,16 @@ app.post("/crear-preferencia", async (req, res) => {
       external_reference: "pedido-barberia-001",
     });
 
-    console.log("✅ Preferencia de pago creada:", preference.body.id);
+    console.log("✅ Preferencia creada:", preference.body.id);
     res.json({ id: preference.body.id });
   } catch (error) {
-    console.error("❌ Error al crear preferencia de pago:", error.message);
-    res.status(500).json({ error: "No se pudo crear preferencia de pago" });
+    console.error("❌ Error MercadoPago:", error.message);
+    res.status(500).json({ error: "Error al crear la preferencia" });
   }
 });
 
 // 🚀 Iniciar servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor backend en ejecución: http://localhost:${PORT}`);
+  console.log(`🚀 Servidor backend ejecutándose en http://localhost:${PORT}`);
 });
