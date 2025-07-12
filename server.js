@@ -7,10 +7,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 🔐 Nueva forma de configurar MercadoPago (v1.5+)
-const mp = new mercadopago.MercadoPago({
+// ✅ Configuración clásica de MercadoPago
+mercadopago.configure({
   access_token: "APP_USR-3258188625824242-071103-aba7caf4da3a3236d31dd66e564a9bef-2553371836",
 });
+
 
 // 💾 Conexión a la base de datos MySQL
 const db = mysql.createConnection({
